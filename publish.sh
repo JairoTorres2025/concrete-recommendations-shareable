@@ -30,14 +30,16 @@ else
   git push -u origin HEAD
 fi
 
-# Enable and deploy Pages from the main branch
-if gh help pages >/dev/null 2>&1; then
-  gh pages enable --source=main --branch=main || true
-  # Newer gh supports deploy from a folder; here root is fine
-  gh pages deploy --branch=main --force --directory . || true
-else
-  echo "'gh pages' subcommand not available. Configure Pages in repo Settings -> Pages (source: main)." >&2
+# Enable GitHub Pages via API (source: main, path: /)
+# This works even if the 'gh pages' extension is unavailable.
+set +e
+PAGE_ENABLE_OUTPUT=$(gh api -X POST "repos/$(gh api user --jq .login)/concrete-recommendations-shareable/pages" -f "source[branch]=main" -f "source[path]=/")
+STATUS=$?
+set -e
+if [ $STATUS -ne 0 ]; then
+  echo "If Pages was already enabled, proceeding..."
 fi
 
+URL="https://$(gh api user --jq .login).github.io/concrete-recommendations-shareable/"
 echo "If Pages is enabled, your site will be available shortly at:"
-echo "  https://$(gh api user --jq .login).github.io/concrete-recommendations-shareable/"
+echo "  $URL"
